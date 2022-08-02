@@ -1,0 +1,6 @@
+# Config options for the dart-dio generator
+pubName: lenta_api
+pubVersion: 0.1.0
+pubDescription: "Lenta API"
+legacyDiscriminatorBehavior: false
+# templateDir: dart-dio-custom

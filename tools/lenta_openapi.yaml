@@ -1,0 +1,524 @@
+openapi: 3.0.2
+info:
+   title: FastAPI
+   version: 0.1.0
+paths:
+   /api/auth/login/phone:
+      post:
+         tags:
+            - auth
+         summary: Auth By Phone
+         description: Авторизация пользователя по телефону
+         operationId: auth_by_phone_api_auth_login_phone_post
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     $ref: "#/components/schemas/AuthByPhoneSchema"
+            required: true
+         responses:
+            "200":
+               description: Номер телефона пользователя активен, смс отправлено на данный номер
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/AuthTokenSchema"
+                     example:
+                        token: 20a6bc8488374925b911628a1e3018a0
+                        expired_at: "2022-08-02T05:05:51.903999"
+            "403":
+               description: Forbidden
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     examples:
+                        user_fired:
+                           summary: ""
+                           value:
+                              status_code: 403
+                              detail:
+                                 type: user_fired
+                                 msg: Пользователь уволен
+                        user_blocked:
+                           summary: ""
+                           value:
+                              status_code: 403
+                              detail:
+                                 type: user_blocked
+                                 msg: Пользователь заблокирован
+                        device_blocked:
+                           summary: ""
+                           value:
+                              status_code: 403
+                              detail:
+                                 type: device_blocked
+                                 msg: Устройство пользователя заблокировано
+            "404":
+               description: Not Found
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     example:
+                        status_code: 404
+                        detail:
+                           type: phone_not_registered
+                           msg: Телефон не зарегистрирован
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/auth/login/phone/validate:
+      post:
+         tags:
+            - auth
+         summary: Validate Sent Sms
+         description: Валидация смс отправленного на устройство пользователя
+         operationId: validate_sent_sms_api_auth_login_phone_validate_post
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     $ref: "#/components/schemas/ValidatePhoneSchema"
+            required: true
+         responses:
+            "200":
+               description: Пользователь верифицирован
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/EmployeeDeviceSchema"
+            "403":
+               description: Forbidden
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     examples:
+                        sms_not_valid:
+                           summary: ""
+                           value:
+                              status_code: 403
+                              detail:
+                                 type: sms_not_valid
+                                 msg: Неправильно введенный смс
+                        input_count_exceded:
+                           summary: ""
+                           value:
+                              status_code: 403
+                              detail:
+                                 type: input_count_exceded
+                                 msg: >-
+                                    Превышено число попыток ввода смс. Устройство
+                                    заблокировано
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/auth/login/token/refresh:
+      post:
+         tags:
+            - auth
+         summary: Refresh Token
+         description: Обновление токена пользователя
+         operationId: refresh_token_api_auth_login_token_refresh_post
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     $ref: "#/components/schemas/ValidatePhoneSchema"
+            required: true
+         responses:
+            "200":
+               description: Пользователь верифицирован
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/EmployeeDeviceSchema"
+            "401":
+               description: Unauthorized
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     examples:
+                        token_required:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_required
+                                 msg: Токен отсутствует
+                        token_invalid:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_invalid
+                                 msg: Токен испорчен
+                        token_expired:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_expired
+                                 msg: Токен просрочен
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/auth/check:
+      get:
+         tags:
+            - auth
+         summary: Check Auth Token
+         description: Проверка токена
+         operationId: check_auth_token_api_auth_check_get
+         parameters:
+            - required: false
+              schema:
+                 title: Authorization
+                 type: string
+                 format: uuid
+              name: authorization
+              in: header
+         responses:
+            "200":
+               description: Пользователь верифицирован
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/EmployeeDeviceSchema"
+            "401":
+               description: Unauthorized
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     examples:
+                        token_required:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_required
+                                 msg: Токен отсутствует
+                        token_invalid:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_invalid
+                                 msg: Токен испорчен
+                        token_expired:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_expired
+                                 msg: Токен просрочен
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/auth/logout:
+      post:
+         tags:
+            - auth
+         summary: Logout
+         description: Стереть данные авторизации устройств
+         operationId: logout_api_auth_logout_post
+         parameters:
+            - required: false
+              schema:
+                 title: Authorization
+                 type: string
+                 format: uuid
+              name: authorization
+              in: header
+         responses:
+            "200":
+               description: Удаление токенов доступа пользователя
+               content:
+                  application/json:
+                     schema: {}
+                     example: {}
+            "401":
+               description: Unauthorized
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/ErrorSchema"
+                     examples:
+                        token_required:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_required
+                                 msg: Токен отсутствует
+                        token_invalid:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_invalid
+                                 msg: Токен испорчен
+                        token_expired:
+                           summary: ""
+                           value:
+                              status_code: 401
+                              detail:
+                                 type: token_expired
+                                 msg: Токен просрочен
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/users/me:
+      get:
+         tags:
+            - users
+         summary: Me
+         description: Информация о пользователе в системе
+         operationId: me_api_users_me_get
+         parameters:
+            - required: false
+              schema:
+                 title: Authorization
+                 type: string
+                 format: uuid
+              name: authorization
+              in: header
+         responses:
+            "200":
+               description: Successful Response
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/EmployeeBaseSchema"
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+   /api/users/me/devices:
+      get:
+         tags:
+            - users
+         summary: User Devices
+         description: Информация о зарегистрированных устройствах пользователя в системе
+         operationId: user_devices_api_users_me_devices_get
+         parameters:
+            - required: false
+              schema:
+                 title: Authorization
+                 type: string
+                 format: uuid
+              name: authorization
+              in: header
+         responses:
+            "200":
+               description: Successful Response
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/EmployeeDeviceSchema"
+            "404":
+               description: Not found
+            "422":
+               description: Validation Error
+               content:
+                  application/json:
+                     schema:
+                        $ref: "#/components/schemas/HTTPValidationError"
+components:
+   schemas:
+      AuthByPhoneSchema:
+         title: AuthByPhoneSchema
+         required:
+            - phone
+         type: object
+         properties:
+            phone:
+               title: Phone
+               type: string
+               description: Номер телефона сотрудника
+      AuthTokenSchema:
+         title: AuthTokenSchema
+         required:
+            - token
+            - expired_at
+         type: object
+         properties:
+            token:
+               title: Token
+               type: string
+               description: Токен для проверки пароля
+               format: uuid
+            expired_at:
+               title: Expired At
+               type: string
+               description: Срок действия токена
+               format: date-time
+      EmployeeBaseSchema:
+         title: EmployeeBaseSchema
+         required:
+            - phone
+            - registered
+            - last_auth
+            - blocked
+            - data
+         type: object
+         properties:
+            phone:
+               title: Phone
+               type: string
+               description: The price must be greater than zero
+            registered:
+               title: Registered
+               type: string
+               format: date-time
+            last_auth:
+               title: Last Auth
+               type: string
+               format: date-time
+            blocked:
+               $ref: "#/components/schemas/EmployeeStatusEnum"
+            data:
+               title: Data
+               type: object
+      EmployeeDeviceSchema:
+         title: EmployeeDeviceSchema
+         required:
+            - employee
+            - created
+            - blocked_status
+            - last_used
+            - last_country
+            - token
+            - token_expired
+            - refresh_token
+         type: object
+         properties:
+            employee:
+               $ref: "#/components/schemas/EmployeeBaseSchema"
+            created:
+               title: Created
+               type: string
+               format: date-time
+            blocked_status:
+               $ref: "#/components/schemas/EmployeeDeviceStatusEnum"
+            last_used:
+               title: Last Used
+               type: string
+               format: date-time
+            last_country:
+               title: Last Country
+               type: string
+            token:
+               title: Token
+               type: string
+            token_expired:
+               title: Token Expired
+               type: string
+               format: date-time
+            refresh_token:
+               title: Refresh Token
+               type: string
+      EmployeeDeviceStatusEnum:
+         title: EmployeeDeviceStatusEnum
+         enum:
+            - 0
+            - 1
+         type: integer
+         description: An enumeration.
+      EmployeeStatusEnum:
+         title: EmployeeStatusEnum
+         enum:
+            - 0
+            - 1
+            - 2
+         type: integer
+         description: An enumeration.
+      ErrorSchema:
+         title: ErrorSchema
+         required:
+            - status_code
+            - detail
+         type: object
+         properties:
+            status_code:
+               title: Status Code
+               type: integer
+            detail:
+               title: Detail
+               type: object
+      HTTPValidationError:
+         title: HTTPValidationError
+         type: object
+         properties:
+            detail:
+               title: Detail
+               type: array
+               items:
+                  $ref: "#/components/schemas/ValidationError"
+      ValidatePhoneSchema:
+         title: ValidatePhoneSchema
+         required:
+            - sms
+            - token
+         type: object
+         properties:
+            sms:
+               title: Sms
+               type: string
+               description: Значение смс, для валидации пользователя
+            token:
+               title: Token
+               type: string
+               description: Токен для проверки пароля
+               format: uuid
+      ValidationError:
+         title: ValidationError
+         required:
+            - loc
+            - msg
+            - type
+         type: object
+         properties:
+            loc:
+               title: Location
+               type: array
+               items:
+                  anyOf:
+                     - type: string
+                     - type: integer
+            msg:
+               title: Message
+               type: string
+            type:
+               title: Error Type
+               type: string
